@@ -1,2 +1,2 @@
 # AonoHomomorphicEncryption
-A Proof-of-Concept implementation of the homomorphic encryption scheme by Yoshinori Aono et al.
+This is a Proof-of-Concept implementation of the homomorphic encryption scheme by Yoshinori Aono et al. This scheme was first introduced in the paper - "Fast and Secure Linear Regression and Biometric Authentication with Security Update" by Yoshinori Aono et al. A really unique feature supported by this proposal is the support for key switching. All the code is written in PARI library (http://pari.math.u-bordeaux.fr/) in C++.
