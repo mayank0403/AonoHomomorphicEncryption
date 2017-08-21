@@ -19,6 +19,8 @@
 #define PARI_OLD_NAMES
 #include <iostream>
 
+// TODO : Use NTL to discrete gaussian sampling
+
 using namespace std;
 
 // Some functions for random sample generation
@@ -33,6 +35,11 @@ double Normal(void) {
 double Gauss(double mu, double sigma) {
     double z=sqrt( -2.0*log(Uniform()) ) * sin( 2.0*M_PI*Uniform() );
     return mu + sigma*z;
+}
+
+// Following the steps written under algorithm D in the paper - https://www.sav.sk/journals/uploads/0212094402follat.pdf
+void SampleAlgorithmD(double mu, double sigma){
+    
 }
 
 GEN Sample(int n, double sigma)
@@ -58,7 +65,11 @@ GEN randomElement(int n){
     return ret;
 }
 
-
+struct pp{
+    GEN q;
+    GEN l;
+    GEN p;
+};
 
 int main(){
     pari_init(2000000000,2);
@@ -69,9 +80,20 @@ int main(){
     //l = stoi(16128);
     //n = stoi(3530);
     
-    int lambda = 128; // lambda is the security parameter for the homomorphic encryption
+    int lambda = 212; // lambda is the security parameter for the homomorphic encryption
+    
+    // employing 128 bit security by taking n as 3530
+    s = stoi(8);
     q = nextprime(gpowgs(stoi(2), lambda));
-    p = stoi(2);
+    p = gadd(gpowgs(stoi(2), 30), stoi(1));
+    
+    pp *pp1 = new pp;
+    pp1->q = q;
+    pp1->l = l;
+    ppq->p = p;
+    
+    
+    
     
     cout<<"Parameter generation has been done"<<endl;
     
