@@ -18,6 +18,7 @@
 #include <string.h>
 #define PARI_OLD_NAMES
 #include <iostream>
+#include "knuthYaoSampler.h"
 
 // TODO : Use NTL to discrete gaussian sampling
 
@@ -73,6 +74,9 @@ struct pp{
 
 int main(){
     pari_init(2000000000,2);
+    
+    getProbabilityMatrix(8, "3.455555554534535353253425234543534535345245235312345678901234567890", 17, 4);
+    
     GEN l, p, n, s, q;
     l = stoi(64); // l is the message length
     n = stoi(3530);
@@ -90,7 +94,7 @@ int main(){
     pp *pp1 = new pp;
     pp1->q = q;
     pp1->l = l;
-    ppq->p = p;
+    //ppq->p = p;
     
     
     
