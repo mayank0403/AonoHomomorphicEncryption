@@ -51,16 +51,42 @@ void getProbabilityMatrix(int sigma, char* c, int precision, int tailprune){
     int bitprecision = 64*(precision-2);
     cout<<"Knuth Yao Probability matrix is moving forward with a bit precision of "<<bitprecision<<endl;
     
-    tempP = cgetg(bitprecision, t_VEC);
+    tempP = cgetg(bitprecision+1, t_VEC);
     for(int i=1; i<=bitprecision; i++){
         GEN temp = cgetg(bounds+2, t_INT);
         gel(tempP, i) = temp;
     }
+    // Some useless statements
     //cout<<GENtostr(gexp(stoi(-1), precision));
     //cout<<GENtostr(gdiv(center, stoi(2)));
     //cout<<GENtostr(gpow(strtor("2.00", precision), stoi(2), precision));
+    //cout<<GENtostr(getGuassProbability(strtor("6.00", precision), stoi(sigma), center, precision));
     
-    cout<<GENtostr(getGuassProbability(strtor("6.00", precision), stoi(sigma), center, precision));
+    for(int x = bounds; x > 0; x--){
+        gel(ProbofPoints, bounds+1-x) = getGuassProbability(gadd(center, stoi(x)), stoi(sigma), center, precision);
+    }
+    // We have found the probability for the rest of points except the point x = 0, which will have 1/2 probability because it does not have a negative counterpart.
+    gel(ProbofPoints, bounds+1) = gdiv(getGuassProbability(gadd(center, stoi(0)), stoi(sigma), center, precision), stoi(2));
     
+    int i = -1;
+    for(int j=0; j<bitprecision; j++){
+        GEN temppow = gpow(strtor("2.00", precision), stoi(i), precision);
+        i--;
+        for(int x = bounds; x >= 0; x--){
+            gel(gel(tempP, j+1), bounds+1-x) = stoi(0);
+            if(gcmp(gel(ProbofPoints, bounds+1-x), temppow) >= 0){
+                gel(gel(tempP, j+1), bounds+1-x) = stoi(1);
+                gel(ProbofPoints, bounds+1-x) = gsub(gel(ProbofPoints, bounds+1-x), temppow);
+            }
+        }
+    }
+    
+    
+    for(int x = bounds; x >= 0; x--){
+        for(int j=0; j<bitprecision; j++){
+            cout<<GENtostr(gel(gel(tempP, j+1), bounds+1-x))<<"\n";
+        }
+        cout<<endl<<endl;
+    }
     
 }
