@@ -38,7 +38,7 @@ GEN getGuassProbability(GEN point, GEN sigma, GEN center, int precision){
 
 // Function to generate the probability matrix which is a substitute of the DDT Tree. Some really fine optimizations are not considered here which help prune this matrix
 
-void getProbabilityMatrix(int sigma, char* c, int precision, int tailprune){
+GEN getProbabilityMatrix(int sigma, char* c, int precision, int tailprune){
     GEN center;
     center = strtor(c, precision);
     
@@ -88,5 +88,28 @@ void getProbabilityMatrix(int sigma, char* c, int precision, int tailprune){
         }
         cout<<endl<<endl;
     }
+    return tempP;
+    // Some part remaining
+    
+}
+
+void SampleKnuthYao(int tailprune, int sigma, int c, int precision){
+    GEN center;
+    center = stoi(c);
+    
+    int bounds, col, d, invsample, pRows, pCols, s, flag, enable, hit;
+    long long int r;
+    bounds = tailprune*sigma;
+    d = 0;
+    hit = 0;
+    invsample = bounds+1;
+    
+    GEN P = getProbabilityMatrix(4, "3.455555554534535353253425234543534535345245235312345678901234567890", 6, 4);
+    
+    pRows = lg(P)-1;
+    pCols = lg(gel(P, 1))-1;
+    
+    flag = 1-2; // Requires clarification
+    
     
 }
