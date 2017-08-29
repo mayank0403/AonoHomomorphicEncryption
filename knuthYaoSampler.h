@@ -18,8 +18,14 @@
 #include <string.h>
 #define PARI_OLD_NAMES
 #include <iostream>
+#include <vector>
 
 using namespace std;
+
+struct ProbMatrixPack{
+    GEN P;
+    vector<int> startPos;
+};
 
 //mulir(sinv, gexp( gdiv(gneg(gpow(gdiv(gsub(point, center), sigma), stoi(2), precision)), strtor("2.00", precision)), precision));
 
@@ -38,7 +44,7 @@ GEN getGuassProbability(GEN point, GEN sigma, GEN center, int precision){
 
 // Function to generate the probability matrix which is a substitute of the DDT Tree. Some really fine optimizations are not considered here which help prune this matrix
 
-GEN getProbabilityMatrix(int sigma, char* c, int precision, int tailprune){
+ProbMatrixPack* getProbabilityMatrix(int sigma, char* c, int precision, int tailprune){
     GEN center;
     center = strtor(c, precision);
     
@@ -88,28 +94,74 @@ GEN getProbabilityMatrix(int sigma, char* c, int precision, int tailprune){
         }
         cout<<endl<<endl;
     }
-    return tempP;
+    
+    vector<int> beginPos;
+    
+    for(int x = bounds; x >= 0; x--){
+        for(int j=0; j<bitprecision; j++){
+            if(gcmp(gel(gel(tempP, j+1), bounds+1-x), stoi(1))==0){
+                beginPos.push_back(j);
+                break;
+            }
+        }
+    }
+    
+    ProbMatrixPack* pPack = new ProbMatrixPack;
+    pPack->P = tempP;
+    pPack->startPos = beginPos;
+    return pPack;
     // Some part remaining
     
 }
 
-void SampleKnuthYao(int tailprune, int sigma, int c, int precision){
+int SampleKnuthYao(int tailprune, int sigma, int c, int precision){
     GEN center;
     center = stoi(c);
     
     int bounds, col, d, invsample, pRows, pCols, s, flag, enable, hit;
-    long long int r;
+    unsigned long r;
     bounds = tailprune*sigma;
     d = 0;
     hit = 0;
     invsample = bounds+1;
     
-    GEN P = getProbabilityMatrix(4, "3.455555554534535353253425234543534535345245235312345678901234567890", 6, 4);
+    ProbMatrixPack* pPack = getProbabilityMatrix(4, "3.455555554534535353253425234543534535345245235312345678901234567890", 6, 4);
+    
+    GEN P = pPack->P;
+    vector<int> beginPos = pPack->startPos;
     
     pRows = lg(P)-1;
     pCols = lg(gel(P, 1))-1;
     
-    flag = 1-2; // Requires clarification
+    flag = 1-2*(rand()%2); // Requires change in the PRNG. A stronger one is required.
+    
+    int randomBits[pRows];
+    int length = sizeof(unsigned long)*8;
     
     
+    for(int i=0; i<pRows; i++){
+        randomBits[i] = rand()%2; // replace with stronger PRNG.
+    }
+    
+    s = 0;
+    enable = 0;
+    for(int row = 0; row<pRows; row++){
+        if(enable==1)
+            break;
+        d = 2*d + randomBits[row];
+        // Denotes the number of nodes to the right of the node to which we go next.
+        for(int col = beginPos[row]; col < pCols; col++) {
+            d = d - itos(gel(gel(P, col+1), row+1));
+            // We are sort of checking if the hamming distance of all nodes on right of present node. If hamming distance is greater than d, then the current node is a leaf node.
+            if(d==-1){
+                hit = 1;
+                s = col;
+                enable = 1;
+                break;
+            }
+        }
+        
+    }
+    cout<<"Answer sampled : "<<(s*flag)+itos(center)<<endl;
+    return (s*flag)+itos(center);
 }

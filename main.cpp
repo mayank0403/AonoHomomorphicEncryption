@@ -76,6 +76,8 @@ int main(){
     pari_init(2000000000,2);
     
     getProbabilityMatrix(4, "3.455555554534535353253425234543534535345245235312345678901234567890", 6, 4);
+    cout<<endl;
+    SampleKnuthYao(4, 6, 3, 4);
     
     GEN l, p, n, s, q;
     l = stoi(64); // l is the message length
