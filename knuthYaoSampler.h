@@ -25,7 +25,7 @@ using namespace std;
 struct ProbMatrixPack{
     GEN P;
     vector<int> startPos;
-};
+} *pPack;
 
 //mulir(sinv, gexp( gdiv(gneg(gpow(gdiv(gsub(point, center), sigma), stoi(2), precision)), strtor("2.00", precision)), precision));
 
@@ -90,9 +90,9 @@ ProbMatrixPack* getProbabilityMatrix(int sigma, char* c, int precision, int tail
     
     for(int x = bounds; x >= 0; x--){
         for(int j=0; j<bitprecision; j++){
-            cout<<GENtostr(gel(gel(tempP, j+1), bounds+1-x))<<"\n";
+            //cout<<GENtostr(gel(gel(tempP, j+1), bounds+1-x))<<"\n";
         }
-        cout<<endl<<endl;
+        //cout<<endl<<endl;
     }
     
     vector<int> beginPos;
@@ -106,10 +106,11 @@ ProbMatrixPack* getProbabilityMatrix(int sigma, char* c, int precision, int tail
         }
     }
     
-    ProbMatrixPack* pPack = new ProbMatrixPack;
-    pPack->P = tempP;
-    pPack->startPos = beginPos;
-    return pPack;
+    ProbMatrixPack* pPacklocal = new ProbMatrixPack;
+    pPacklocal->P = tempP;
+    pPacklocal->startPos = beginPos;
+    pPack = pPacklocal;
+    return pPacklocal;
     // Some part remaining
     
 }
@@ -125,7 +126,7 @@ int SampleKnuthYao(int tailprune, int sigma, int c, int precision){
     hit = 0;
     invsample = bounds+1;
     
-    ProbMatrixPack* pPack = getProbabilityMatrix(4, "3.455555554534535353253425234543534535345245235312345678901234567890", 6, 4);
+    //ProbMatrixPack* pPack = getProbabilityMatrix(4, "3.455555554534535353253425234543534535345245235312345678901234567890", 6, 4);
     
     GEN P = pPack->P;
     vector<int> beginPos = pPack->startPos;
@@ -162,6 +163,6 @@ int SampleKnuthYao(int tailprune, int sigma, int c, int precision){
         }
         
     }
-    cout<<"Answer sampled : "<<(s*flag)+itos(center)<<endl;
+    //cout<<"Answer sampled : "<<(s*flag)+itos(center)<<endl;
     return (s*flag)+itos(center);
 }
