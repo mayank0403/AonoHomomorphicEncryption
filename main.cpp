@@ -81,7 +81,7 @@ int main(){
     
     GEN l, p, n, s, q;
     l = stoi(64); // l is the message length
-    n = stoi(3530);
+    n = stoi(830);
     // More demanding parameters
     //l = stoi(16128);
     //n = stoi(3530);
@@ -91,7 +91,7 @@ int main(){
     // employing 128 bit security by taking n as 3530
     s = stoi(8);
     q = nextprime(gpowgs(stoi(2), lambda));
-    p = gadd(gpowgs(stoi(2), 30), stoi(1));
+    p = gadd(gpowgs(stoi(2), 3), stoi(1));
     
     pp *pp1 = new pp;
     pp1->q = q;
@@ -121,16 +121,49 @@ int main(){
     A = zeromatcopy(itos(n), itos(n));
     for(int i = 1; i <= itos(n); i++){
         for(int j=1; j<=itos(n); j++){
-            gel(gel(A, i), j) = gmodulo(stoi(rand()), q);
+            gel(gel(A, i), j) = gmodulo(stoi(rand()%20), q);
         }
     }
     
     GEN P, temp;
     
     temp = RgM_mul(A, S);
-    P = gadd(gmul(p, R), temp);
+    P = gsub(gmul(p, R), temp);
     cout<<"Matrix is "<<lg(gel(P, 1))-1<<"x"<<lg(P)-1<<endl;
     cout<<"Key generation has been done\n";
+    
+    GEN m = zeromatcopy(1, itos(l));
+    
+    GEN e1 = zeromatcopy(1, itos(n));
+    GEN e2 = zeromatcopy(1, itos(n));
+    GEN e3 = zeromatcopy(1, itos(l));
+    
+    for(int i = 1; i <= itos(n); i++){
+        for(int j=1; j<=1; j++){
+            //cout<<i<<" "<<j<<endl;
+            gel(gel(e1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
+            gel(gel(e2, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
+        }
+    }
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(e3, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
+        }
+    }
+    cout<<"Errors generated\n";
+    GEN c1, c2;
+    c1 = gadd(RgM_mul(e1, A), gmul(p, e2));
+    c2 = gadd(gadd(RgM_mul(e1, P), gmul(p, e3)), m);
+    //cout<<GENtostr(c2)<<endl;
+    cout<<"Message matrix is "<<lg(gel(c2, 1))-1<<"x"<<lg(c2)-1<<endl;
+    cout<<"Decrypting the encrypted message now"<<endl;
+    
+    GEN decryptedmessage;
+    decryptedmessage = lift(gmodulo(lift(gadd(gmul(c1, S), c2)), p));
+    cout<<GENtostr(decryptedmessage)<<endl;
+    
+    cout<<GENtostr(lift(gmodulo(gmul(p, gadd(gadd(gmul(e1, R), gmul(e2, S)), e3)), p)))<<endl;
+    
     cout<<"Cleaning up the Pari stack. Ending program.";
     pari_close();
     return 0;
