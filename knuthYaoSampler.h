@@ -25,7 +25,10 @@ using namespace std;
 struct ProbMatrixPack{
     GEN P;
     vector<int> startPos;
-} *pPack;
+} *pPacklocal;
+
+ProbMatrixPack* pPack = new ProbMatrixPack;
+
 
 //mulir(sinv, gexp( gdiv(gneg(gpow(gdiv(gsub(point, center), sigma), stoi(2), precision)), strtor("2.00", precision)), precision));
 
@@ -87,6 +90,7 @@ ProbMatrixPack* getProbabilityMatrix(int sigma, char* c, int precision, int tail
         }
     }
     
+    //cout<<GENtostr(gel(gel(tempP, 1), 9))<<endl;
     
     for(int x = bounds; x >= 0; x--){
         for(int j=0; j<bitprecision; j++){
@@ -99,6 +103,11 @@ ProbMatrixPack* getProbabilityMatrix(int sigma, char* c, int precision, int tail
     
     for(int x = bounds; x >= 0; x--){
         for(int j=0; j<bitprecision; j++){
+            if(j == bitprecision-2){
+                beginPos.push_back(j);
+                break;
+            }
+                
             if(gcmp(gel(gel(tempP, j+1), bounds+1-x), stoi(1))==0){
                 beginPos.push_back(j);
                 break;
@@ -106,11 +115,13 @@ ProbMatrixPack* getProbabilityMatrix(int sigma, char* c, int precision, int tail
         }
     }
     
-    ProbMatrixPack* pPacklocal = new ProbMatrixPack;
-    pPacklocal->P = tempP;
-    pPacklocal->startPos = beginPos;
-    pPack = pPacklocal;
-    return pPacklocal;
+    pPack->P = tempP;
+    pPack->startPos = beginPos;
+    
+    
+    
+    //pPack = pPacklocal;
+    return pPack;
     // Some part remaining
     
 }
@@ -130,9 +141,9 @@ int SampleKnuthYao(int tailprune, int sigma, int c, int precision){
     
     GEN P = pPack->P;
     vector<int> beginPos = pPack->startPos;
-    
+    int bitprecision = 64*(precision-2);
     pRows = lg(P)-1;
-    pCols = lg(gel(P, 1))-1;
+    pCols = bitprecision;
     
     flag = 1-2*(rand()%2); // Requires change in the PRNG. A stronger one is required.
     

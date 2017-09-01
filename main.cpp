@@ -72,6 +72,11 @@ struct pp{
     GEN p;
 };
 
+// To know the amount of error in the code
+void printErrorTerm(GEN p, GEN e1, GEN e2, GEN e3, GEN R, GEN S){
+    cout<<"The error term should be small compared to q and it (the error term) is - "<<GENtostr(gmul(p, gadd(gadd(gmul(e1, R), gmul(e2, S)), e3)))<<endl<<"---------------------------"<<endl;
+}
+
 int main(){
     pari_init(2000000000,2);
     
@@ -81,7 +86,7 @@ int main(){
     
     GEN l, p, n, s, q;
     l = stoi(64); // l is the message length
-    n = stoi(830);
+    n = stoi(530);
     // More demanding parameters
     //l = stoi(16128);
     //n = stoi(3530);
@@ -108,12 +113,14 @@ int main(){
     
     //cout<<GENtostr(gmodulo(R, s))<<endl;
     //cout<<GENtostr(R)<<endl;
-    getProbabilityMatrix(8, "0.00", 6, itos(s));
+    getProbabilityMatrix(4, "0.00", 6, itos(s));
+    cout<<pPack->startPos.size()<<endl;
+    
     for(int i = 1; i <= itos(l); i++){
         for(int j=1; j<=itos(n); j++){
             //cout<<i<<" "<<j<<endl;
-            gel(gel(R, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
-            gel(gel(S, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
+            gel(gel(R, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
+            gel(gel(S, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
         }
     }
     
@@ -141,13 +148,13 @@ int main(){
     for(int i = 1; i <= itos(n); i++){
         for(int j=1; j<=1; j++){
             //cout<<i<<" "<<j<<endl;
-            gel(gel(e1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
-            gel(gel(e2, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
+            gel(gel(e1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
+            gel(gel(e2, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
         }
     }
     for(int i = 1; i <= itos(l); i++){
         for(int j=1; j<=1; j++){
-            gel(gel(e3, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 8, 0, 6)), s));
+            gel(gel(e3, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
         }
     }
     cout<<"Errors generated\n";
@@ -160,9 +167,10 @@ int main(){
     
     GEN decryptedmessage;
     decryptedmessage = lift(gmodulo(lift(gadd(gmul(c1, S), c2)), p));
-    cout<<GENtostr(decryptedmessage)<<endl;
+    cout<<"The actual message is "<<GENtostr(m)<<endl<<"---------------------------"<<endl;
+    cout<<"The decrypted message is "<<GENtostr(decryptedmessage)<<endl<<"---------------------------"<<endl;
     
-    cout<<GENtostr(lift(gmodulo(gmul(p, gadd(gadd(gmul(e1, R), gmul(e2, S)), e3)), p)))<<endl;
+    printErrorTerm(p, e1, e2, e3, R, S);
     
     cout<<"Cleaning up the Pari stack. Ending program.";
     pari_close();
