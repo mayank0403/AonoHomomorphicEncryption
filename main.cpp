@@ -126,10 +126,11 @@ int main(){
     }
     
     GEN P, temp;
+    
     temp = RgM_mul(A, S);
-    
-    cout<<GENtostr(temp)<<endl;
-    
+    P = gadd(gmul(p, R), temp);
+    cout<<"Matrix is "<<lg(gel(P, 1))-1<<"x"<<lg(P)-1<<endl;
+    cout<<"Key generation has been done\n";
     cout<<"Cleaning up the Pari stack. Ending program.";
     pari_close();
     return 0;
