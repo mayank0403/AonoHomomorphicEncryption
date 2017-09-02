@@ -141,6 +141,12 @@ int main(){
     
     GEN m = zeromatcopy(1, itos(l));
     
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(m, i), j) = stoi(2);
+        }
+    }
+    
     GEN e1 = zeromatcopy(1, itos(n));
     GEN e2 = zeromatcopy(1, itos(n));
     GEN e3 = zeromatcopy(1, itos(l));
@@ -171,6 +177,70 @@ int main(){
     cout<<"The decrypted message is "<<GENtostr(decryptedmessage)<<endl<<"---------------------------"<<endl;
     
     printErrorTerm(p, e1, e2, e3, R, S);
+    
+    // Additive Homomorphism
+    
+    GEN m1 = zeromatcopy(1, itos(l));
+    
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(m1, i), j) = stoi(3);
+        }
+    }
+    
+    GEN e1_1 = zeromatcopy(1, itos(n));
+    GEN e2_1 = zeromatcopy(1, itos(n));
+    GEN e3_1 = zeromatcopy(1, itos(l));
+    
+    for(int i = 1; i <= itos(n); i++){
+        for(int j=1; j<=1; j++){
+            //cout<<i<<" "<<j<<endl;
+            gel(gel(e1_1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
+            gel(gel(e2_1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
+        }
+    }
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(e3_1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s), 4, 0, 6)), s));
+        }
+    }
+    
+    GEN c1_1, c2_1;
+    c1_1 = gadd(RgM_mul(e1_1, A), gmul(p, e2_1));
+    c2_1 = gadd(gadd(RgM_mul(e1_1, P), gmul(p, e3_1)), m1);
+    
+    GEN c1add, c2add;
+    
+    c1add = gadd(c1, c1_1);
+    c2add = gadd(c2, c2_1);
+    
+    decryptedmessage = lift(gmodulo(lift(gadd(gmul(c1add, S), c2add)), p));
+    cout<<"The decrypted message after additive homomorphism is "<<GENtostr(decryptedmessage)<<endl<<"---------------------------"<<endl;
+    
+    GEN cmul;
+    
+    // Append c2 after c1 to make just one ciphertext cmul
+    GEN cbeforemul = zeromatcopy(1, itos(n)+itos(l));
+    GEN c_1beforemul = zeromatcopy(1, itos(n)+itos(l));
+    for(int i = 1; i <= itos(l)+itos(n); i++){
+        for(int j=1; j<=1; j++){
+            if(i<=itos(n)){
+                gel(gel(cbeforemul, i), j) = gel(gel(c1, i), j);
+                gel(gel(c_1beforemul, i), j) = gel(gel(c1_1, i), j);
+                
+            }
+            else{
+                gel(gel(cbeforemul, i), j) = gel(gel(c2, i-itos(n)), j);
+                gel(gel(c_1beforemul, i), j) = gel(gel(c2_1, i-itos(n)), j);
+            }
+        }
+    }
+    
+    cmul = RgM_transmul(cbeforemul, c_1beforemul);
+    
+    // This matrix can be precomputed
+    GEN SIMatrix;
+    
     
     cout<<"Cleaning up the Pari stack. Ending program.";
     pari_close();
