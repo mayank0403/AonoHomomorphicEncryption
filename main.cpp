@@ -239,8 +239,23 @@ int main(){
     cmul = RgM_transmul(cbeforemul, c_1beforemul);
     
     // This matrix can be precomputed
-    GEN SIMatrix;
+    GEN SIMatrix = zeromatcopy(itos(n)+itos(l), itos(l));
+    GEN I = matid(itos(l));
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=itos(l)+itos(n); j++){
+            if(j<=itos(n)){
+                gel(gel(SIMatrix, i), j) = gel(gel(S, i), j);
+                
+            }
+            else{
+                gel(gel(SIMatrix, i), j) = gel(gel(I, i), j-itos(n));
+            }
+        }
+    }
     
+    decryptedmessage = lift(gmodulo(lift(gmul(RgM_transmul(SIMatrix, cmul), SIMatrix)), p));
+    cout<<"The decrypted message after multiplicative homomorphism is "<<GENtostr(decryptedmessage)<<endl<<"---------------------------"<<endl;
+    cout<<"Message matrix is "<<lg(gel(decryptedmessage, 1))-1<<"x"<<lg(decryptedmessage)-1<<endl;
     
     cout<<"Cleaning up the Pari stack. Ending program.";
     pari_close();
