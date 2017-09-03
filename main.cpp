@@ -115,18 +115,39 @@ GEN bits(GEN m, int kappa, int n){
     GEN mat = zeromatcopy(1, n*kappa);
     long long int nkappa = n*kappa;
     for(int i =1; i<= n; i++){
-        GEN bintemp = binary_zv(gel(gel(m, i), 1));
-        GEN binx = vecreverse(bintemp); // This is now LSB to MSB
+        //cout<<"i "<<i<<endl;
+        GEN bintemp = binary_zv(lift(gel(gel(m, i), 1)));
+        bintemp = gtovec(bintemp);
+        //cout<<"normal "<<GENtostr(bintemp)<<endl;
+        GEN binx = cgetg(lg(bintemp), t_VEC);
+        //cout<<lg(bintemp)-1<<endl;
+        for(int j=1; j<=lg(bintemp)-1; j++){
+            gel(binx, j) = gel(bintemp, lg(bintemp)-j);
+            //cout<<gel(binx, j)<<endl;
+        }
+        // This is now LSB to MSB
+        //cout<<"reverse "<<GENtostr(binx)<<endl;
+        
         int size = lg(binx)-1;
+        //cout<<size<<"    "<<GENtostr(lift(gel(gel(m, i), 1)))<<"     "<<GENtostr(binx)<<endl;
         for(int j=1; j<=kappa; j++){
+            //cout<<"l"<<endl;
             if(j>size){
-                gel(gel(mat, (i-1)*kappa+j), 1) = stoi(0);
+                //cout<<"put 0\n";
+                //gel(gel(mat, (i-1)*kappa+j), 1) = stoi(0);
+                gel(gel(mat, i+(j-1)*n), 1) = stoi(0);
+                //cout<<"done putting\n";
             }
             else{
-                gel(gel(mat, (i-1)*kappa+j), 1) = gel(gel(m, i), 1);
+                //cout<<j<<" "<<size<<endl;
+                //gel(gel(mat, (i-1)*kappa+j), 1) = gel(binx, j);
+                gel(gel(mat, i+(j-1)*n), 1) = gel(binx, j);
+                //gel(gel(mat, (i-1)*kappa+j), 1) = gel(gel(m, i), 1);
+                //cout<<"after"<<endl;
             }
         }
     }
+    //cout<<"returned"<<endl;
     
     return mat;
 }
@@ -140,17 +161,17 @@ int main(){
     
     GEN l, p, n, s, q;
     l = stoi(64); // l is the message length
-    n = stoi(100);
+    n = stoi(15);
     // More demanding parameters
     //l = stoi(16128);
     //n = stoi(3530);
     
-    int lambda = 100; // lambda is the security parameter for the homomorphic encryption
+    int lambda = 200; // lambda is the security parameter for the homomorphic encryption
     
     // employing 128 bit security by taking n as 3530
     s = stoi(8);
     q = nextprime(gpowgs(stoi(2), lambda));
-    p = gadd(gpowgs(stoi(2), 3), stoi(1));
+    p = gadd(gpowgs(stoi(2), 7), stoi(1));
     
     pp *pp1 = new pp;
     pp1->q = q;
@@ -313,7 +334,7 @@ int main(){
     */
     
     // Performing key switching
-    GEN n1 = stoi(90);
+    GEN n1 = stoi(10);
     GEN s1 = stoi(8);
     
     GEN R1, S1, A1;
@@ -358,7 +379,7 @@ int main(){
     for(int i = 1; i <= itos(n1); i++){
         for(int j=1; j<=nkappa; j++){
             // TODO remove this hardcoded modulo
-            gel(gel(X, i), j) = gmodulo(stoi(rand()%30), q);
+            gel(gel(X, i), j) = gmodulo(stoi(rand()%15), q);
         }
     }
     E = zeromatcopy(nkappa, itos(l));
@@ -393,8 +414,13 @@ int main(){
         }
     }
     E0 = gadd(gmul(f1, appendmat(A1, P1, itos(n1), itos(l), itos(n1))), gmul(p, appendmat(f2, f3, itos(n1), itos(l), 1)));
+    GEN bitsc1 = bits(c1, itos(kappa), itos(n));
+    //cout<<"bitsc1 matrix is "<<lg(gel(bitsc1, 1))-1<<"x"<<lg(bitsc1)-1<<endl;
+    cout<<"x matrix is "<<lg(gel(X, 1))-1<<"x"<<lg(X)-1<<endl;
+    GEN tempcal = gmul(bitsc1, X);
+    //cout<<"tempcal done\n";
+    F = appendmat(tempcal, gadd(gmul(bits(c1, itos(kappa), itos(n)), Y), c2), itos(n1), itos(l), 1);
     
-    F = appendmat(gmul(bits(c1, itos(kappa), itos(n)), X), gadd(gmul(bits(c1, itos(kappa), itos(n)), Y), c2), itos(n1), itos(l), 1);
     
     cdash = gadd(E0, F);
     //cout<<GENtostr(lift(cdash))<<endl;
@@ -412,8 +438,25 @@ int main(){
             }
         }
     }
-    decryptedmessage = lift(gmodulo(lift(gmul(F, SIMatrix)), p));
-    cout<<GENtostr(decryptedmessage)<<endl;
+    
+    decryptedmessage = lift(gmodulo(lift(gmul(cdash, SIMatrix)), p));
+    cout<<"Decrypted message from new key after key rotation is - \n";
+    cout<<"-----------------------------------------\n"<<GENtostr(decryptedmessage)<<endl<<"-----------------------------------------\n";
+    GEN mtest = zeromatcopy(1, 2);
+    for(int i = 1; i <= 2; i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(mtest, i), j) = stoi(8);
+        }
+    }
+    GEN m1test = zeromatcopy(2, 1);
+    for(int i = 1; i <= 1; i++){
+        for(int j=1; j<=2; j++){
+            gel(gel(m1test, i), j) = stoi(8);
+        }
+    }
+    //cout<<GENtostr(lift(power2(m1test, 2, 4, 1, q)))<<endl;
+    //cout<<"x matrix is "<<lg(gel(power2(m1test, 2, 4, 1, q), 1))-1<<"x"<<lg(power2(m1test, 2, 4, 1, q))-1<<endl;
+    //cout<<GENtostr(gmul(bits(mtest, 4, 2), power2(m1test, 2, 4, 1, q)))<<endl;
     
     cout<<"Cleaning up the Pari stack. Ending program.";
     pari_close();
