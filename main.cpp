@@ -77,8 +77,62 @@ void printErrorTerm(GEN p, GEN e1, GEN e2, GEN e3, GEN R, GEN S){
     cout<<"The error term should be small compared to q and it (the error term) is - "<<GENtostr(gmul(p, gadd(gadd(gmul(e1, R), gmul(e2, S)), e3)))<<endl<<"---------------------------"<<endl;
 }
 
+GEN power2(GEN x, int n, int kappa, int l, GEN q){
+    GEN power2mat = zeromatcopy(n*kappa, l);
+    long long int nkappa = n*kappa;
+    GEN pow2 = stoi(1);
+    for(int i = 1; i <= l; i++){
+        //cout<<i<<endl;
+        pow2 = stoi(1);
+        for(int j=1; j <= kappa; j++){
+            for(int k=1; k<=n; k++){
+                gel(gel(power2mat, i), (j-1)*n+k) = gmodulo(gmul(gel(gel(x, i), k), pow2), q);
+            }
+            pow2 = gmul(pow2, stoi(2));
+        }
+    }
+    
+    return power2mat;
+}
+
+GEN appendmat(GEN m1, GEN m2, int col1, int col2, int row){
+    GEN mat = zeromatcopy(row, col1+col2);
+    for(int i =1; i<= col1+col2; i++){
+        for(int j=1; j<=row; j++){
+            if(i<=col1){
+                gel(gel(mat, i), j) = gel(gel(m1, i), j);
+            }
+            else{
+                gel(gel(mat, i), j) = gel(gel(m2, i-col1), j);
+            }
+        }
+    }
+    
+    return mat;
+}
+
+GEN bits(GEN m, int kappa, int n){
+    GEN mat = zeromatcopy(1, n*kappa);
+    long long int nkappa = n*kappa;
+    for(int i =1; i<= n; i++){
+        GEN bintemp = binary_zv(gel(gel(m, i), 1));
+        GEN binx = vecreverse(bintemp); // This is now LSB to MSB
+        int size = lg(binx)-1;
+        for(int j=1; j<=kappa; j++){
+            if(j>size){
+                gel(gel(mat, (i-1)*kappa+j), 1) = stoi(0);
+            }
+            else{
+                gel(gel(mat, (i-1)*kappa+j), 1) = gel(gel(m, i), 1);
+            }
+        }
+    }
+    
+    return mat;
+}
+
 int main(){
-    pari_init(2000000000,2);
+    pari_init(2500000000,2);
     
     
     //cout<<endl;
@@ -86,12 +140,12 @@ int main(){
     
     GEN l, p, n, s, q;
     l = stoi(64); // l is the message length
-    n = stoi(530);
+    n = stoi(100);
     // More demanding parameters
     //l = stoi(16128);
     //n = stoi(3530);
     
-    int lambda = 212; // lambda is the security parameter for the homomorphic encryption
+    int lambda = 100; // lambda is the security parameter for the homomorphic encryption
     
     // employing 128 bit security by taking n as 3530
     s = stoi(8);
@@ -180,7 +234,7 @@ int main(){
     
     // Additive Homomorphism
     
-    GEN m1 = zeromatcopy(1, itos(l));
+    /*GEN m1 = zeromatcopy(1, itos(l));
     
     for(int i = 1; i <= itos(l); i++){
         for(int j=1; j<=1; j++){
@@ -256,6 +310,110 @@ int main(){
     decryptedmessage = lift(gmodulo(lift(gmul(RgM_transmul(SIMatrix, cmul), SIMatrix)), p));
     cout<<"The decrypted message after multiplicative homomorphism is "<<GENtostr(decryptedmessage)<<endl<<"---------------------------"<<endl;
     cout<<"Message matrix is "<<lg(gel(decryptedmessage, 1))-1<<"x"<<lg(decryptedmessage)-1<<endl;
+    */
+    
+    // Performing key switching
+    GEN n1 = stoi(90);
+    GEN s1 = stoi(8);
+    
+    GEN R1, S1, A1;
+    // R and S are nxl
+    R1 = zeromatcopy(itos(n1), itos(l));
+    S1 = zeromatcopy(itos(n1), itos(l));
+    
+    //cout<<GENtostr(gmodulo(R, s))<<endl;
+    //cout<<GENtostr(R)<<endl;
+    
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=itos(n1); j++){
+            //cout<<i<<" "<<j<<endl;
+            gel(gel(R1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s1), 4, 0, 6)), s1));
+            gel(gel(S1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s1), 4, 0, 6)), s1));
+        }
+    }
+    
+    // A is nxn
+    A1 = zeromatcopy(itos(n1), itos(n1));
+    for(int i = 1; i <= itos(n1); i++){
+        for(int j=1; j<=itos(n1); j++){
+            // TODO remove this hardcoded modulo
+            gel(gel(A1, i), j) = gmodulo(stoi(rand()%20), q);
+        }
+    }
+    
+    GEN P1, temp1;
+    
+    temp1 = RgM_mul(A1, S1);
+    P1 = gsub(gmul(p, R1), temp1);
+    // New set of keys have been generated
+    //cout<<GENtostr(gdiv(glog(stoi(17), 4), mplog2(4)))<<endl;
+    // NOTE: Add sufficient precision here if you get incorrect results.
+    GEN kappa = gceil(gdiv(glog(q, 10), mplog2(10)));
+    if(itos(kappa) != lambda+1){
+        cout<<"log incorrect\n";
+    }
+    GEN X, E, Y;
+    X = zeromatcopy(itos(gmul(n,kappa)), itos(n1));
+    long long int nkappa = itos(gmul(n,kappa));
+    for(int i = 1; i <= itos(n1); i++){
+        for(int j=1; j<=nkappa; j++){
+            // TODO remove this hardcoded modulo
+            gel(gel(X, i), j) = gmodulo(stoi(rand()%30), q);
+        }
+    }
+    E = zeromatcopy(nkappa, itos(l));
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=nkappa; j++){
+            gel(gel(E, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s1), 4, 0, 6)), s1));
+        }
+    }
+    
+    Y = gsub(gadd(gmul(p, E), power2(S, itos(n), itos(kappa), itos(l), q)), gmul(X, S1));
+    
+    cout<<"Y matrix is "<<lg(gel(Y, 1))-1<<"x"<<lg(Y)-1<<endl;
+    cout<<"Rotation keys have been generated"<<endl;
+    
+    GEN f1, f2, f3, E0, F, cdash;
+    f1 = zeromatcopy(1, itos(n1));
+    for(int i = 1; i <= itos(n1); i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(f1, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s1), 4, 0, 6)), s1));
+        }
+    }
+    f2 = zeromatcopy(1, itos(n1));
+    for(int i = 1; i <= itos(n1); i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(f2, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s1), 4, 0, 6)), s1));
+        }
+    }
+    f3 = zeromatcopy(1, itos(l));
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=1; j++){
+            gel(gel(f3, i), j) = lift(gmodulo(stoi(SampleKnuthYao(itos(s1), 4, 0, 6)), s1));
+        }
+    }
+    E0 = gadd(gmul(f1, appendmat(A1, P1, itos(n1), itos(l), itos(n1))), gmul(p, appendmat(f2, f3, itos(n1), itos(l), 1)));
+    
+    F = appendmat(gmul(bits(c1, itos(kappa), itos(n)), X), gadd(gmul(bits(c1, itos(kappa), itos(n)), Y), c2), itos(n1), itos(l), 1);
+    
+    cdash = gadd(E0, F);
+    //cout<<GENtostr(lift(cdash))<<endl;
+    
+    GEN SIMatrix = zeromatcopy(itos(n1)+itos(l), itos(l));
+    GEN I = matid(itos(l));
+    for(int i = 1; i <= itos(l); i++){
+        for(int j=1; j<=itos(l)+itos(n1); j++){
+            if(j<=itos(n1)){
+                gel(gel(SIMatrix, i), j) = gel(gel(S1, i), j);
+                
+            }
+            else{
+                gel(gel(SIMatrix, i), j) = gel(gel(I, i), j-itos(n1));
+            }
+        }
+    }
+    decryptedmessage = lift(gmodulo(lift(gmul(F, SIMatrix)), p));
+    cout<<GENtostr(decryptedmessage)<<endl;
     
     cout<<"Cleaning up the Pari stack. Ending program.";
     pari_close();
